@@ -69,7 +69,7 @@ if (insertUserError) {
         'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'deepseek-v4-flash',
         messages: fullContext,
         max_tokens: 500
       })
