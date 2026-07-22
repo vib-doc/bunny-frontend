@@ -35,9 +35,15 @@ export default async function handler(req, res) {
     }
 
     // 2. 保存用户消息
-    await supabase.from('messages').insert([
-      { session_id: sessionId, role: 'user', content: message }
-    ]);
+const { error: insertUserError } = await supabase.from('messages').insert([
+  { session_id: sessionId, role: 'user', content: message }
+]);
+
+if (insertUserError) {
+  console.error('保存用户消息失败:', insertUserError);
+  return res.status(500).json({ error: '保存用户消息失败', details: insertUserError });
+}
+    
 
     // 3. 加载该会话最近的消息历史
     const { data: history, error: historyError } = await supabase
@@ -78,9 +84,14 @@ export default async function handler(req, res) {
     const reply = data.choices?.[0]?.message?.content || '没有收到有效回复';
 
     // 6. 保存 AI 回复到数据库
-    await supabase.from('messages').insert([
-      { session_id: sessionId, role: 'assistant', content: reply }
-    ]);
+    const { error: insertAssistantError } = await supabase.from('messages').insert([
+  { session_id: sessionId, role: 'assistant', content: reply }
+]);
+
+if (insertAssistantError) {
+  console.error('保存AI回复失败:', insertAssistantError);
+  return res.status(500).json({ error: '保存AI回复失败', details: insertAssistantError });
+}
 
     // 7. 返回回复
     res.status(200).json({ reply });
