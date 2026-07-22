@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-
 // 初始化 Supabase 客户端
+// 调试日志：打印环境变量是否加载
+console.log('=== 环境变量检查 ===');
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? '已设置' : '未设置');
+console.log('SUPABASE_KEY:', process.env.SUPABASE_KEY ? '已设置' : '未设置');
+console.log('DEEPSEEK_API_KEY:', process.env.DEEPSEEK_API_KEY ? '已设置' : '未设置');
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
