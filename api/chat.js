@@ -57,11 +57,11 @@ if (insertUserError) {
     // 4. 构建上下文
     const context = history || [];
     // 获取当前时间（北京时间）
-const now = new Date();
-const beijingTime = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-const timeMessage = `当前时间是：${beijingTime}`;
+    const now = new Date();
+    const beijingTime = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const timeMessage = `当前时间是：${beijingTime}`;
 
-const messagesWithTime = [
+    const messagesWithTime = [
   { role: 'system', content: timeMessage },
   ...context,
   { role: 'user', content: message }
