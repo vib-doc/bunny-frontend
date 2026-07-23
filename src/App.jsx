@@ -57,7 +57,14 @@ const handleFileUpload = async (e) => {
     }
 
     const data = await response.json();
-    const extractedText = (data.text || data.content || data.result || '').replace(/\s+/g, ' ').trim();
+    console.log('📦 Upstage 返回的完整数据:', data);
+    let extractedText = data.text || data.content || data.result || '';
+if (typeof extractedText !== 'string') {
+  console.warn('⚠️ extractedText 不是字符串，当前类型:', typeof extractedText);
+  extractedText = JSON.stringify(extractedText, null, 2);
+} else {
+  extractedText = extractedText.replace(/\s+/g, ' ').trim();
+}
 
     if (!extractedText) {
       throw new Error('未能从 PDF 中提取文本');
