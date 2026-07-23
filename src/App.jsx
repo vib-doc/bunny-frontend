@@ -31,26 +31,43 @@ function App() {
       setLoading(false)
     }
   }
-  const handleFileUpload = async (e) => {
+const handleFileUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
   setUploading(true);
-  const formData = new FormData();
-  formData.append('file', file);
-
   try {
-    const res = await fetch('/api/upload-pdf', {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('model', 'document-parse');
+    formData.append('output_formats', JSON.stringify(['text']));
+    formData.append('ocr', 'auto');
+
+    const response = await fetch('https://api.upstage.ai/v1/document-digitization', {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Authorization': 'Bearer up_8732rooHcrQm2snxOA152FTCtkEH7'
+      },
+      body: formData
     });
-    const data = await res.json();
-    if (data.text) {
-      setInput(`[PDF内容]\n${data.text}\n\n请根据以上内容回答：`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upstage 返回错误 (${response.status}): ${errorText}`);
     }
-  } catch (err) {
-    console.error('上传失败:', err);
-    alert('PDF 解析失败，请检查文件或稍后重试');
+
+    const data = await response.json();
+    const extractedText = data.text || data.content || data.result || '';
+
+    if (!extractedText) {
+      throw new Error('未能从 PDF 中提取文本');
+    }
+
+    setInput(`[PDF内容]\n${extractedText}\n\n请根据以上内容回答：`);
+    alert('✅ PDF 解析成功！内容已填入输入框。');
+  } catch (error) {
+    console.error('PDF 解析失败:', error);
+    alert('PDF 解析失败: ' + error.message);
   } finally {
     setUploading(false);
   }
