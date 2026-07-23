@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css'
 
 function App() {
   const [messages, setMessages] = useState([])
+  const messagesEndRef = useRef(null);
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false);
@@ -98,13 +99,14 @@ return (
     <div className="app">
       <div className="chat-container">
         <div className="messages">
-          {messages.map((msg, idx) => (
-            <div key={idx} className={`message ${msg.role}`}>
-              {msg.content}
-            </div>
-          ))}
-          {loading && <div className="message assistant">正在思考...</div>}
-        </div>
+  {messages.map((msg, idx) => (
+    <div key={idx} className={`message ${msg.role}`}>
+      {msg.content}
+    </div>
+  ))}
+  {loading && <div className="message assistant">正在思考...</div>}
+  <div ref={messagesEndRef} />  {/* 这一行移到这里，在循环外面 */}
+</div>
         <div className="input-area">
   <input
     type="file"
