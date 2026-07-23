@@ -93,8 +93,10 @@ if (typeof extractedText !== 'string') {
 };
 
 useEffect(() => {
-  loadMessages();
-}, []); 
+  if (messagesEndRef.current) {
+    messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }
+}, [messages]);
 return (
     <div className="app">
       <div className="chat-container">
