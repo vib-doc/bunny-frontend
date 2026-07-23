@@ -1,10 +1,9 @@
-import formidable from 'formidable';
-import fs from 'fs';
+// api/upload-pdf.js
+import Busboy from 'busboy';
 
-// 需要先安装 formidable：npm install formidable
 export const config = {
   api: {
-    bodyParser: false, // 关闭默认解析，用 formidable 处理文件
+    bodyParser: false,
   },
 };
 
@@ -13,22 +12,38 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    // 1. 解析上传的文件
-    const form = formidable({});
-    const [fields, files] = await form.parse(req);
-    const file = files.file?.[0];
+  // 检查环境变量
+  if (!process.env.UPSTAGE_API_KEY) {
+    return res.status(500).json({ error: '缺少UPSTAGE_API_KEY环境变量' });
+  }
 
-    if (!file) {
-      return res.status(400).json({ error: '未上传文件' });
+  try {
+    const bb = Busboy({ headers: req.headers });
+    let fileBuffer = null;
+    let fileName = '';
+
+    await new Promise((resolve, reject) => {
+      bb.on('file', (name, file, info) => {
+        fileName = info.filename;
+        const chunks = [];
+        file.on('data', (data) => chunks.push(data));
+        file.on('end', () => {
+          fileBuffer = Buffer.concat(chunks);
+        });
+      });
+      bb.on('finish', resolve);
+      bb.on('error', reject);
+      req.pipe(bb);
+    });
+
+    if (!fileBuffer) {
+      return res.status(400).json({ error: '未上传文件或文件为空' });
     }
 
-    // 2. 读取文件内容
-    const fileBuffer = fs.readFileSync(file.filepath);
-
-    // 3. 调用 Upstage API 解析 PDF
+    // 调用 Upstage API
     const formData = new FormData();
-    formData.append('file', new Blob([fileBuffer]), file.originalFilename);
+    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    formData.append('file', blob, fileName);
 
     const response = await fetch('https://api.upstage.ai/v1/document-ai/pdf', {
       method: 'POST',
@@ -40,16 +55,17 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Upstage API 请求失败: ${response.status} - ${errorText}`);
+      throw new Error(`Upstage API 返回 ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    // Upstage 返回的数据结构可能包含 text 或 content，根据实际返回调整
     const extractedText = data.text || data.content || data.result || '';
 
-    // 4. 返回提取的文本
-    res.status(200).json({ text: extractedText });
+    if (!extractedText) {
+      return res.status(500).json({ error: '未能从PDF中提取文本' });
+    }
 
+    res.status(200).json({ text: extractedText });
   } catch (error) {
     console.error('PDF 解析失败:', error.message);
     res.status(500).json({ error: 'PDF 解析失败', details: error.message });
