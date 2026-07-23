@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useState, useEffect } from 'react';
 import './App.css'
 
 function App() {
@@ -6,6 +7,17 @@ function App() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false);
+  const loadMessages = async () => {
+  try {
+    const res = await fetch('/api/chat-history?sessionId=1');
+    const data = await res.json();
+    if (data.messages) {
+      setMessages(data.messages);
+    }
+  } catch (err) {
+    console.error('加载历史消息失败:', err);
+  }
+};
 
   const sendMessage = async () => {
     if (!input.trim()) return
@@ -80,7 +92,10 @@ if (typeof extractedText !== 'string') {
   }
 };
 
-  return (
+useEffect(() => {
+  loadMessages();
+}, []); 
+return (
     <div className="app">
       <div className="chat-container">
         <div className="messages">
