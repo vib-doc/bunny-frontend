@@ -66,6 +66,8 @@ const messagesWithTime = [
   ...context,
   { role: 'user', content: message }
 ];
+console.log('📅 注入的时间消息:', timeMessage);
+// 时间戳功能已集成
 
 // 5. 调用 DeepSeek API
 const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
