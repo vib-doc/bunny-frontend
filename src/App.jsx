@@ -57,7 +57,7 @@ const handleFileUpload = async (e) => {
     }
 
     const data = await response.json();
-    const extractedText = data.text || data.content || data.result || '';
+    const extractedText = (data.text || data.content || data.result || '').replace(/\s+/g, ' ').trim();
 
     if (!extractedText) {
       throw new Error('未能从 PDF 中提取文本');
