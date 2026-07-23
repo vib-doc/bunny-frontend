@@ -56,24 +56,30 @@ if (insertUserError) {
 
     // 4. 构建上下文
     const context = history || [];
-    const fullContext = [
-      ...context,
-      { role: 'user', content: message }
-    ];
+    // 获取当前时间（北京时间）
+const now = new Date();
+const beijingTime = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+const timeMessage = `当前时间是：${beijingTime}`;
 
-    // 5. 调用 DeepSeek API
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-v4-flash',
-        messages: fullContext,
-        max_tokens: 500
-      })
-    });
+const messagesWithTime = [
+  { role: 'system', content: timeMessage },
+  ...context,
+  { role: 'user', content: message }
+];
+
+// 5. 调用 DeepSeek API
+const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`
+  },
+  body: JSON.stringify({
+    model: 'deepseek-v4-flash',
+    messages: messagesWithTime,
+    max_tokens: 500
+  })
+});
 
     if (!response.ok) {
       const errorText = await response.text();
