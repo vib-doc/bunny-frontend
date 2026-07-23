@@ -18,7 +18,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. 用 busboy 解析文件
     const bb = Busboy({ headers: req.headers });
     let fileBuffer = null;
     let fileName = '';
@@ -41,21 +40,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '未上传文件或文件为空' });
     }
 
-    // 2. 构建 multipart/form-data 请求
-    const FormData = (await import('form-data')).default;
+    // 调用 Upstage API（使用正确的端点和字段名）
     const formData = new FormData();
-    formData.append('document', fileBuffer, { filename: fileName });
+    const blob = new Blob([fileBuffer], { type: 'application/pdf' });
+    // 注意这里是 'document' 而不是 'file'
+    formData.append('document', blob, fileName);
     formData.append('model', 'document-parse');
     formData.append('output_formats', JSON.stringify(['text']));
     formData.append('ocr', 'auto');
-    formData.append('coordinates', 'false'); // 不需要坐标信息，减少响应大小
 
-    // 3. 调用 Upstage API
     const response = await fetch('https://api.upstage.ai/v1/document-digitization', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.UPSTAGE_API_KEY}`,
-        ...formData.getHeaders(),
       },
       body: formData,
     });
@@ -66,7 +63,6 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    // 根据实际返回结构提取文本（通常是 data.text 或 data.content）
     const extractedText = data.text || data.content || data.result || '';
 
     if (!extractedText) {
