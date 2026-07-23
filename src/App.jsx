@@ -5,6 +5,7 @@ function App() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false);
 
   const sendMessage = async () => {
     if (!input.trim()) return
@@ -30,6 +31,30 @@ function App() {
       setLoading(false)
     }
   }
+  const handleFileUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  setUploading(true);
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload-pdf', {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.text) {
+      setInput(`[PDF内容]\n${data.text}\n\n请根据以上内容回答：`);
+    }
+  } catch (err) {
+    console.error('上传失败:', err);
+    alert('PDF 解析失败，请检查文件或稍后重试');
+  } finally {
+    setUploading(false);
+  }
+};
 
   return (
     <div className="app">
@@ -43,14 +68,24 @@ function App() {
           {loading && <div className="message assistant">正在思考...</div>}
         </div>
         <div className="input-area">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="输入消息..."
-          />
-          <button onClick={sendMessage}>发送</button>
-        </div>
+  <input
+    type="file"
+    accept=".pdf"
+    onChange={handleFileUpload}
+    style={{ display: 'none' }}
+    id="pdf-upload"
+  />
+  <label htmlFor="pdf-upload" style={{ cursor: 'pointer', padding: '8px 12px', background: '#f0ebe6', borderRadius: '40px' }}>
+    📄 PDF
+  </label>
+  <input
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+    placeholder="输入消息..."
+  />
+  <button onClick={sendMessage}>发送</button>
+</div>
       </div>
     </div>
   )
